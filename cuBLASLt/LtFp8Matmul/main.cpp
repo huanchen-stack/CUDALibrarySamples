@@ -22,16 +22,27 @@
 #include "helpers.h"
 
 int main() {
-    float beta = cublasLtGetVersion() >= 12 * 10000 ? 1.0 : 0.0; // can be non-zero starting from 12.0
-    TestBench<__nv_fp8_e4m3, __nv_fp8_e4m3, float, float, float, __nv_bfloat16> props(
-        CUBLAS_OP_T, CUBLAS_OP_N, 64, 128, 256, 2.0f, beta, 32ULL * 1024 * 1024);
 
-    props.run([&props] {
-        LtFp8Matmul(props.ltHandle, props.transa, props.transb, props.m, props.n, props.k, &props.alpha,
-                    props.AscaleDev, props.Adev, props.lda, props.BscaleDev, props.Bdev, props.ldb, &props.beta,
-                    props.CscaleDev, props.Cdev, props.ldc, props.DscaleDev, props.Ddev, props.ldd, props.DamaxDev,
-                    props.workspace, props.workspaceSize);
-    });
+    std::vector<int> batch_sizes = {1, 16, 32, 64, 128, 256, 512, 1024, 2048}; // M
+    // int intermediate = 14336; // N
+    // int hidden = 4096; // K
+    int intermediate = 6144; // N
+    int hidden = 2048; // K
+
+    for (int batch_size : batch_sizes) {
+        printf("Running LtNvfp4Matmul with batch size=%d intermediate=%d hidden=%d\n", 
+            batch_size, intermediate, hidden);
+        float beta = cublasLtGetVersion() >= 12 * 10000 ? 1.0 : 0.0; // can be non-zero starting from 12.0
+        TestBench<__nv_fp8_e4m3, __nv_fp8_e4m3, float, float, float, __nv_bfloat16> props(
+            CUBLAS_OP_T, CUBLAS_OP_N, batch_size, intermediate, hidden, 2.0f, beta, 32ULL * 1024 * 1024);
+
+        props.run([&props] {
+            LtFp8Matmul(props.ltHandle, props.transa, props.transb, props.m, props.n, props.k, &props.alpha,
+                        props.AscaleDev, props.Adev, props.lda, props.BscaleDev, props.Bdev, props.ldb, &props.beta,
+                        props.CscaleDev, props.Cdev, props.ldc, props.DscaleDev, props.Ddev, props.ldd, props.DamaxDev,
+                        props.workspace, props.workspaceSize);
+        });
+    }
 
     return 0;
 }

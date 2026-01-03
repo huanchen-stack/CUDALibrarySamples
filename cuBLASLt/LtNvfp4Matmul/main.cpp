@@ -21,8 +21,6 @@
 #include "sample_cublasLt_LtNvfp4Matmul.h"
 #include "helpers.h"
 
-#include <vector>
-
 int main() {
 
     std::vector<int> batch_sizes = {1, 32, 64, 128, 256, 512, 1024, 2048}; // M
