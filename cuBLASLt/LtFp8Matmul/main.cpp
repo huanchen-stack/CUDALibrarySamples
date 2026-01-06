@@ -24,13 +24,13 @@
 int main() {
 
     std::vector<int> batch_sizes = {1, 16, 32, 64, 128, 256, 512, 1024, 2048}; // M
-    // int intermediate = 14336; // N
-    // int hidden = 4096; // K
-    int intermediate = 6144; // N
-    int hidden = 2048; // K
+    int intermediate = 14336; // N
+    int hidden = 4096; // K
+    // int intermediate = 6144; // N
+    // int hidden = 2048; // K
 
     for (int batch_size : batch_sizes) {
-        printf("Running LtNvfp4Matmul with batch size=%d intermediate=%d hidden=%d\n", 
+        printf("Running LtFp8Matmul with batch size=%d intermediate=%d hidden=%d\n", 
             batch_size, intermediate, hidden);
         float beta = cublasLtGetVersion() >= 12 * 10000 ? 1.0 : 0.0; // can be non-zero starting from 12.0
         TestBench<__nv_fp8_e4m3, __nv_fp8_e4m3, float, float, float, __nv_bfloat16> props(

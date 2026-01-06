@@ -24,13 +24,13 @@
 int main() {
 
     std::vector<int> batch_sizes = {1, 32, 64, 128, 256, 512, 1024, 2048}; // M
-    // int intermediate = 14336; // N
-    // int hidden = 4096; // K
-    int intermediate = 6144; // N
-    int hidden = 2048; // K
+    int intermediate = 14336; // N
+    int hidden = 4096; // K
+    // int intermediate = 6144; // N
+    // int hidden = 2048; // K
 
     for (int batch_size : batch_sizes) {
-        printf("Running LtNvfp4Matmul with batch size=%d intermediate=%d hidden=%d\n", 
+        printf("Running LtMxfp8Matmul with batch size=%d intermediate=%d hidden=%d\n", 
             batch_size, intermediate, hidden);
         TestBench<__nv_fp8_e4m3, __nv_fp8_e4m3, float, __nv_fp8_e8m0, __nv_fp8_e8m0, __nv_bfloat16> props(
             CUBLAS_OP_T, CUBLAS_OP_N, batch_size, intermediate, hidden, 2.0f, 1.0f, 32ULL * 1024 * 1024, 1,

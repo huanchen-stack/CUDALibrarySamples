@@ -24,10 +24,10 @@
 int main() {
 
     std::vector<int> batch_sizes = {1, 32, 64, 128, 256, 512, 1024, 2048}; // M
-    // int intermediate = 14336; // N
-    // int hidden = 4096; // K
-    int intermediate = 6144; // N
-    int hidden = 2048; // K
+    int intermediate = 14336; // N
+    int hidden = 4096; // K
+    // int intermediate = 6144; // N
+    // int hidden = 2048; // K
 
     for (int batch_size : batch_sizes) {
         printf("Running LtNvfp4Matmul with batch size=%d intermediate=%d hidden=%d\n", 

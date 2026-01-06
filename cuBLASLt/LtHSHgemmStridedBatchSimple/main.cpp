@@ -19,14 +19,28 @@
 #include "helpers.h"
 
 int main() {
-    TestBench<__half, __half, float> props(CUBLAS_OP_N, CUBLAS_OP_N, 4, 4, 4, 2.0f, 0.0f, 4 * 1024 * 1024 * 2, 2);
 
-    props.run([&props] {
-        LtHSHgemmStridedBatchSimple(props.ltHandle, props.transa, props.transb, props.m, props.n, props.k, &props.alpha,
-                                    props.Adev, props.lda, props.m * props.k, props.Bdev, props.ldb, props.k * props.n,
-                                    &props.beta, props.Cdev, props.ldc, props.m * props.n, props.N, props.workspace,
-                                    props.workspaceSize);
-    });
+    std::vector<int> batch_sizes = {1, 32, 64, 128, 256, 512, 1024, 2048}; // M
+    // int intermediate = 14336; // N
+    // int hidden = 4096; // K
+    int intermediate = 6144; // N
+    int hidden = 2048; // K
+
+    for (int batch_size : batch_sizes) {
+        printf("Running LtHSHMatmul with batch size=%d intermediate=%d hidden=%d\n", 
+            batch_size, intermediate, hidden);
+
+        TestBench<__half, __half, float> props(CUBLAS_OP_N, CUBLAS_OP_N, 
+            batch_size, intermediate, hidden, 
+            2.0f, 0.0f, 4 * 1024 * 1024 * 2, 2);
+
+        props.run([&props] {
+            LtHSHgemmStridedBatchSimple(props.ltHandle, props.transa, props.transb, props.m, props.n, props.k, &props.alpha,
+                                        props.Adev, props.lda, props.m * props.k, props.Bdev, props.ldb, props.k * props.n,
+                                        &props.beta, props.Cdev, props.ldc, props.m * props.n, props.N, props.workspace,
+                                        props.workspaceSize);
+        });
+    }
 
     return 0;
 }

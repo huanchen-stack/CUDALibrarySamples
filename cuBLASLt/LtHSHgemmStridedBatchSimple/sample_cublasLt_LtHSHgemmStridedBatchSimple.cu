@@ -84,6 +84,54 @@ void LtHSHgemmStridedBatchSimple(cublasLtHandle_t ltHandle,
     checkCublasStatus(cublasLtMatmul(ltHandle, operationDesc, alpha, A, Adesc, B, Bdesc, beta, C, Cdesc, C, Cdesc, NULL,
                                      workspace, workspaceSize, 0));
 
+    // capture graph
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+
+    cudaGraph_t graph;
+    cudaGraphExec_t graphExec;
+
+    cudaStreamBeginCapture(stream, cudaStreamCaptureModeGlobal);
+
+    for (int i=0; i < 1000; i++)
+        cublasLtMatmul(ltHandle, operationDesc, alpha, A, Adesc, B, Bdesc, beta, C, Cdesc, C, Cdesc, NULL,
+                                     workspace, workspaceSize, stream);
+
+    cudaError_t captureErr = cudaStreamEndCapture(stream, &graph);
+    if (captureErr != cudaSuccess) {
+        printf("Capture failed: %s\n", cudaGetErrorString(captureErr));
+        return;
+    }
+    cudaError_t instErr = cudaGraphInstantiate(&graphExec, graph, nullptr, nullptr, 0);
+    if (instErr != cudaSuccess) {
+        printf("Instantiate failed: %s\n", cudaGetErrorString(instErr));
+        return;
+    }
+
+    // warmup
+    for (int i=0; i < 10; i++)
+        cudaGraphLaunch(graphExec, stream);
+    
+    cudaEvent_t start, stop; 
+    cudaEventCreate(&start); cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
+    for (int i=0; i < 10; i++)
+        cudaGraphLaunch(graphExec, stream);
+
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float milliseconds = 0.0f; 
+    cudaEventElapsedTime(&milliseconds, start, stop); 
+    printf("Elapsed time (Avg): %f ms\n", milliseconds/10000);
+
+    cudaEventDestroy(start); cudaEventDestroy(stop);
+
+    cudaGraphExecDestroy(graphExec);
+    cudaGraphDestroy(graph);
+    cudaStreamDestroy(stream);
+
     // descriptors are no longer needed as all GPU work was already enqueued
     if (Cdesc) checkCublasStatus(cublasLtMatrixLayoutDestroy(Cdesc));
     if (Bdesc) checkCublasStatus(cublasLtMatrixLayoutDestroy(Bdesc));
