@@ -109,6 +109,12 @@ void LtFp8Matmul(cublasLtHandle_t ltHandle,
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
+    checkCublasStatus(cublasLtMatmul(ltHandle, operationDesc, alpha, A, Adesc, B, Bdesc, &beta, C, Cdesc, D, Ddesc,
+                                     &heuristicResult.algo, workspace, workspaceSize, 0));
+    checkCublasStatus(cublasLtMatmul(ltHandle, operationDesc, alpha, A, Adesc, B, Bdesc, &beta, C, Cdesc, D, Ddesc,
+                                     &heuristicResult.algo, workspace, workspaceSize, 0));
+
+
     cudaGraph_t graph;
     cudaGraphExec_t graphExec;
 
@@ -135,12 +141,12 @@ void LtFp8Matmul(cublasLtHandle_t ltHandle,
     
     cudaEvent_t start, stop; 
     cudaEventCreate(&start); cudaEventCreate(&stop);
-    cudaEventRecord(start);
+    cudaEventRecord(start, stream);
 
     for (int i=0; i < 10; i++)
         cudaGraphLaunch(graphExec, stream);
 
-    cudaEventRecord(stop);
+    cudaEventRecord(stop, stream);
     cudaEventSynchronize(stop);
 
     float milliseconds = 0.0f; 
